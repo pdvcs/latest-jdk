@@ -113,7 +113,7 @@ func setupArgs() *ProgramArgs {
 		os.Exit(0)
 	}
 
-	jdkRelease := flag.Int("release", 0, "The major JDK release")
+	jdkRelease := flag.Int("release", 0, "The major JDK release; if not provided, the latest is found and used.")
 	jdkArch := flag.String("arch", "x64", "The JDK target machine architecture")
 	jdkOS := flag.String("os", runtime.GOOS, "The JDK target OS")
 	ltsRelease := flag.Bool("lts", false, "Get the latest LTS release")
