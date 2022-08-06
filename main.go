@@ -114,7 +114,7 @@ func setupArgs() *ProgramArgs {
 	}
 
 	jdkRelease := flag.Int("release", 0, "The major JDK release; if not provided, the latest is found and used.")
-	jdkArch := flag.String("arch", "x64", "The JDK target machine architecture")
+	jdkArch := flag.String("arch", arch(), "The JDK target machine architecture")
 	jdkOS := flag.String("os", runtime.GOOS, "The JDK target OS")
 	ltsRelease := flag.Bool("lts", false, "Get the latest LTS release")
 	showHelp := flag.Bool("h", false, "Show help/usage")
@@ -133,6 +133,14 @@ func setupArgs() *ProgramArgs {
 
 	args := ProgramArgs{release: *jdkRelease, arch: *jdkArch, os: *jdkOS, lts: *ltsRelease}
 	return &args
+}
+
+func arch() string {
+	if runtime.GOARCH == "amd64" {
+		return "x64"
+	} else {
+		return runtime.GOARCH
+	}
 }
 
 func check(err error) {
