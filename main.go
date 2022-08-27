@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
@@ -15,7 +15,7 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-const PROGRAM_VERSION = "0.1.1"
+const ProgramVersion = "0.1.1"
 
 type ProgramArgs struct {
 	release int
@@ -33,7 +33,7 @@ func main() {
 
 	var result string
 	if args.showVer {
-		result = apiLatestVersion(args.arch, args.os, apiResponseBytes(apiEndpoint(args.release)))
+		result = apiLatestVersion(apiResponseBytes(apiEndpoint(args.release)))
 	} else {
 		result = apiPackageUrl(args.arch, args.os, apiResponseBytes(apiEndpoint(args.release)))
 	}
@@ -64,7 +64,7 @@ func apiPackageUrl(arch, os string, apiResponse []byte) string {
 	return queryForString(queryStr, apiResponse)
 }
 
-func apiLatestVersion(arch, os string, apiResponse []byte) string {
+func apiLatestVersion(apiResponse []byte) string {
 	version := queryForString(`. | first | .version.openjdk_version`, apiResponse)
 	r := strings.Index(version, "+")
 	if r == -1 {
@@ -78,7 +78,7 @@ func apiLatestVersion(arch, os string, apiResponse []byte) string {
 }
 
 func apiResponseBytes(url string) []byte {
-	userAgent := "latest-jdk/" + PROGRAM_VERSION
+	userAgent := "latest-jdk/" + ProgramVersion
 	fetcher := http.Client{
 		Timeout: time.Second * 4,
 	}
@@ -89,10 +89,15 @@ func apiResponseBytes(url string) []byte {
 	res, err := fetcher.Do(req)
 	check(err)
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				fmt.Println("error reading API response:", err)
+			}
+		}(res.Body)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	check(err)
 
 	return body
@@ -148,7 +153,7 @@ func setupArgs() *ProgramArgs {
 		os.Exit(0)
 	}
 	if *showVersion {
-		fmt.Printf("latest-jdk v%v\n", PROGRAM_VERSION)
+		fmt.Printf("latest-jdk v%v\n", ProgramVersion)
 		os.Exit(0)
 	}
 
