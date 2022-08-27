@@ -15,25 +15,32 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-const PROGRAM_VERSION = "0.1.0"
+const PROGRAM_VERSION = "0.1.1"
 
 type ProgramArgs struct {
 	release int
 	arch    string
 	os      string
 	lts     bool
+	showVer bool
 }
 
 func main() {
 	args := setupArgs()
 	if args.release == 0 {
-		apiGetLatestRelease(args)
+		apiLatestRelease(args)
 	}
-	url := apiGetPackageUrl(args.arch, args.os, apiResponseBytes(apiEndpoint(args.release)))
-	fmt.Println(url)
+
+	var result string
+	if args.showVer {
+		result = apiLatestVersion(args.arch, args.os, apiResponseBytes(apiEndpoint(args.release)))
+	} else {
+		result = apiPackageUrl(args.arch, args.os, apiResponseBytes(apiEndpoint(args.release)))
+	}
+	fmt.Println(result)
 }
 
-func apiGetLatestRelease(args *ProgramArgs) {
+func apiLatestRelease(args *ProgramArgs) {
 	const apiUrl = "https://api.adoptium.net/v3/info/available_releases"
 	query := ".most_recent_feature_release"
 	if args.lts {
@@ -50,11 +57,24 @@ func apiEndpoint(release int) string {
 	return strings.Replace(api, "$RELEASE", strconv.Itoa(release), 1)
 }
 
-func apiGetPackageUrl(arch, os string, apiRespnse []byte) string {
+func apiPackageUrl(arch, os string, apiRespnse []byte) string {
 	const jqQuery = `.[] | .binary | select(.image_type == "jdk") | select(.architecture == "$ARCH") | select(.os == "$OS") | .package.link`
 	queryStr := strings.Replace(jqQuery, "$ARCH", arch, 1)
 	queryStr = strings.Replace(queryStr, "$OS", os, 1)
 	return queryForString(queryStr, apiRespnse)
+}
+
+func apiLatestVersion(arch, os string, apiRespnse []byte) string {
+	version := queryForString(`. | first | .version.openjdk_version`, apiRespnse)
+	r := strings.Index(version, "+")
+	if r == -1 {
+		r = strings.Index(version, "-")
+	}
+	if r == -1 {
+		return "error"
+	} else {
+		return version[0:r]
+	}
 }
 
 func apiResponseBytes(url string) []byte {
@@ -117,6 +137,7 @@ func setupArgs() *ProgramArgs {
 	jdkArch := flag.String("arch", arch(), "The JDK target machine architecture")
 	jdkOS := flag.String("os", runtime.GOOS, "The JDK target OS")
 	ltsRelease := flag.Bool("lts", false, "Get the latest LTS release")
+	showVer := flag.Bool("jv", false, "Print the JDK version only, not the URL")
 	showHelp := flag.Bool("h", false, "Show help/usage")
 	showVersion := flag.Bool("v", false, "Show version info")
 	flag.Parse()
@@ -131,7 +152,7 @@ func setupArgs() *ProgramArgs {
 		os.Exit(0)
 	}
 
-	args := ProgramArgs{release: *jdkRelease, arch: *jdkArch, os: *jdkOS, lts: *ltsRelease}
+	args := ProgramArgs{release: *jdkRelease, arch: *jdkArch, os: *jdkOS, lts: *ltsRelease, showVer: *showVer}
 	return &args
 }
 
