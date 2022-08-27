@@ -57,15 +57,15 @@ func apiEndpoint(release int) string {
 	return strings.Replace(api, "$RELEASE", strconv.Itoa(release), 1)
 }
 
-func apiPackageUrl(arch, os string, apiRespnse []byte) string {
+func apiPackageUrl(arch, os string, apiResponse []byte) string {
 	const jqQuery = `.[] | .binary | select(.image_type == "jdk") | select(.architecture == "$ARCH") | select(.os == "$OS") | .package.link`
 	queryStr := strings.Replace(jqQuery, "$ARCH", arch, 1)
 	queryStr = strings.Replace(queryStr, "$OS", os, 1)
-	return queryForString(queryStr, apiRespnse)
+	return queryForString(queryStr, apiResponse)
 }
 
-func apiLatestVersion(arch, os string, apiRespnse []byte) string {
-	version := queryForString(`. | first | .version.openjdk_version`, apiRespnse)
+func apiLatestVersion(arch, os string, apiResponse []byte) string {
+	version := queryForString(`. | first | .version.openjdk_version`, apiResponse)
 	r := strings.Index(version, "+")
 	if r == -1 {
 		r = strings.Index(version, "-")
