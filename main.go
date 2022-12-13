@@ -4,44 +4,58 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/itchyny/gojq"
 	"io"
 	"net/http"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/itchyny/gojq"
 )
 
 const ProgramVersion = "0.1.1"
+const apiUrl = "https://api.adoptium.net/v3/info/available_releases"
 
 type ProgramArgs struct {
-	release int
-	arch    string
-	os      string
-	lts     bool
-	showVer bool
+	release      int
+	arch         string
+	os           string
+	lts          bool
+	showVer      bool
+	listReleases bool
 }
 
 func main() {
+
 	args := setupArgs()
 	if args.release == 0 {
+
 		apiLatestRelease(args)
 	}
 
 	var result string
 	if args.showVer {
+
 		result = apiLatestVersion(apiResponseBytes(apiEndpoint(args.release)))
+
+	} else if args.listReleases {
+
+		result = apiListReleases()
+
 	} else {
+
 		result = apiPackageUrl(args.arch, args.os, apiResponseBytes(apiEndpoint(args.release)))
 	}
 	fmt.Println(result)
 }
 
+func apiListReleases() string {
+
+	query := ".available_releases"
+	return queryForString(query, apiResponseBytes(apiUrl))
+}
+
 func apiLatestRelease(args *ProgramArgs) {
-	const apiUrl = "https://api.adoptium.net/v3/info/available_releases"
 	query := ".most_recent_feature_release"
 	if args.lts {
 		query = ".most_recent_lts"
@@ -89,15 +103,16 @@ func apiResponseBytes(url string) []byte {
 }
 
 func queryForString(jqQuery string, jsonBytes []byte) string {
-	var unmarshaledJson interface{}
-	e := json.Unmarshal(jsonBytes, &unmarshaledJson)
+
+	var unmarshalledJson interface{}
+	e := json.Unmarshal(jsonBytes, &unmarshalledJson)
 	check(e)
 
 	queryRunner, err := gojq.Parse(jqQuery)
 	check(err)
 
 	result := "error: could not understand API response"
-	iter := queryRunner.Run(unmarshaledJson)
+	iter := queryRunner.Run(unmarshalledJson)
 	for {
 		v, ok := iter.Next()
 		if !ok {
@@ -111,6 +126,22 @@ func queryForString(jqQuery string, jsonBytes []byte) string {
 		}
 		if s, ok := v.(string); ok {
 			result = s
+		}
+		if interfaceArray, ok := v.([]interface{}); ok {
+
+			result = ""
+			for index, interfaceArrayItem := range interfaceArray {
+
+				packageUrl := apiPackageUrl(arch(), runtime.GOOS, apiResponseBytes(apiEndpoint(int(interfaceArrayItem.(float64)))))
+				if index == 0 {
+
+					result += packageUrl
+
+				} else {
+
+					result += "\n" + packageUrl
+				}
+			}
 		}
 	}
 	return result
@@ -130,6 +161,7 @@ func setupArgs() *ProgramArgs {
 	showVer := flag.Bool("jv", false, "Print the JDK version only, not the URL")
 	showHelp := flag.Bool("h", false, "Show help/usage")
 	showVersion := flag.Bool("v", false, "Show version info")
+	listReleases := flag.Bool("listReleases", false, "List Available Releases")
 	flag.Parse()
 
 	if *showHelp {
@@ -142,7 +174,7 @@ func setupArgs() *ProgramArgs {
 		os.Exit(0)
 	}
 
-	args := ProgramArgs{release: *jdkRelease, arch: *jdkArch, os: *jdkOS, lts: *ltsRelease, showVer: *showVer}
+	args := ProgramArgs{release: *jdkRelease, arch: *jdkArch, os: *jdkOS, lts: *ltsRelease, showVer: *showVer, listReleases: *listReleases}
 	return &args
 }
 
