@@ -1,4 +1,4 @@
-module github.com/baneeishaque/adoptium-jdk
+module github.com/baneeishaque/adoptium-jdk-go
 
 go 1.19
 
