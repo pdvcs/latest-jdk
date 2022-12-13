@@ -1,4 +1,4 @@
-package main
+package adoptium_jdk
 
 import (
 	"encoding/json"
