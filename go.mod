@@ -1,4 +1,4 @@
-module latest-jdk
+module adoptium-jdk
 
 go 1.19
 
