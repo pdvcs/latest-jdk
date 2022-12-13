@@ -78,24 +78,9 @@ func apiLatestVersion(apiResponse []byte) string {
 }
 
 func apiResponseBytes(url string) []byte {
-	userAgent := "latest-jdk/" + ProgramVersion
-	fetcher := http.Client{
-		Timeout: time.Second * 4,
-	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	check(err)
 
-	req.Header.Set("User-Agent", userAgent)
-	res, err := fetcher.Do(req)
+	res, err := http.Get(url)
 	check(err)
-	if res.Body != nil {
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				fmt.Println("error reading API response:", err)
-			}
-		}(res.Body)
-	}
 
 	body, err := io.ReadAll(res.Body)
 	check(err)
