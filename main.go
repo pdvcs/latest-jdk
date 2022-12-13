@@ -40,7 +40,7 @@ func main() {
 
 	} else if args.listReleases {
 
-		result = apiListReleases()
+		result = ApiListReleases()
 
 	} else {
 
