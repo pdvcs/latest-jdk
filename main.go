@@ -49,7 +49,7 @@ func main() {
 	fmt.Println(result)
 }
 
-func apiListReleases() string {
+func ApiListReleases() string {
 
 	query := ".available_releases"
 	return queryForString(query, apiResponseBytes(apiUrl))
