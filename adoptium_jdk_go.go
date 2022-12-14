@@ -1,4 +1,4 @@
-package adoptium_jdk
+package adoptium_jdk_go
 
 import (
 	"encoding/json"
