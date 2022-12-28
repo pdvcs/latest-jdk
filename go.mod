@@ -1,4 +1,4 @@
-module latest-jdk
+module github.com/baneeishaque/adoptium_jdk_go
 
 go 1.19
 
