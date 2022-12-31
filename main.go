@@ -15,7 +15,7 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-const ProgramVersion = "0.1.1"
+const ProgramVersion = "0.1.2"
 
 type ProgramArgs struct {
 	release int
@@ -140,7 +140,7 @@ func setupArgs() *ProgramArgs {
 
 	jdkRelease := flag.Int("release", 0, "The major JDK release; if not provided, the latest is found and used.")
 	jdkArch := flag.String("arch", arch(), "The JDK target machine architecture")
-	jdkOS := flag.String("os", runtime.GOOS, "The JDK target OS")
+	jdkOS := flag.String("os", opsys(), "The JDK target OS")
 	ltsRelease := flag.Bool("lts", false, "Get the latest LTS release")
 	showVer := flag.Bool("jv", false, "Print the JDK version only, not the URL")
 	showHelp := flag.Bool("h", false, "Show help/usage")
@@ -166,6 +166,14 @@ func arch() string {
 		return "x64"
 	} else {
 		return runtime.GOARCH
+	}
+}
+
+func opsys() string {
+	if runtime.GOOS == "darwin" {
+		return "mac"
+	} else {
+		return runtime.GOOS
 	}
 }
 
