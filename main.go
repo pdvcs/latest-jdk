@@ -104,7 +104,7 @@ func apiResponseBytes(url string) []byte {
 }
 
 func queryForString(jqQuery string, jsonBytes []byte) string {
-	var unmarshaledJson interface{}
+	var unmarshaledJson any
 	e := json.Unmarshal(jsonBytes, &unmarshaledJson)
 	check(e)
 
